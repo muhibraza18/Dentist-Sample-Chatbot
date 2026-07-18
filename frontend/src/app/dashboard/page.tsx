@@ -1,5 +1,5 @@
 import { api } from "@/lib/api";
-import type { Appointment, Lead } from "@/lib/types";
+import type { Appointment, Conversation, KnowledgeDocument, Lead } from "@/lib/types";
 
 const clientId = 1;
 
@@ -7,8 +7,8 @@ export default async function DashboardPage() {
   const [appointments, leads, conversations, knowledge] = await Promise.all([
     api.get<Appointment[]>(`/appointments?client_id=${clientId}`),
     api.get<Lead[]>(`/leads?client_id=${clientId}`),
-    api.get(`/conversations?client_id=${clientId}`),
-    api.get(`/knowledge?client_id=${clientId}`),
+    api.get<Conversation[]>(`/conversations?client_id=${clientId}`),
+    api.get<KnowledgeDocument[]>(`/knowledge?client_id=${clientId}`),
   ]);
 
   const cards = [
