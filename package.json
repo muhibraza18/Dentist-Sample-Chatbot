@@ -1,0 +1,8 @@
+{
+  "name": "ai-chatbot-dentist",
+  "private": true,
+  "workspaces": [
+    "frontend"
+  ]
+}
+

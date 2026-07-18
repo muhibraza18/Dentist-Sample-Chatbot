@@ -1,0 +1,10 @@
+node_modules
+.next
+dist
+__pycache__
+.pytest_cache
+.env
+.env.local
+.venv
+alembic/versions/__pycache__
+
