@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const clientId = 1;
-const BACKEND_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+const clientSlug = "default";
 
 export default function KnowledgePage() {
   const [docs, setDocs] = useState<any[]>([]);
@@ -12,9 +11,7 @@ export default function KnowledgePage() {
   const [status, setStatus] = useState("");
 
   async function loadDocs() {
-    const response = await fetch(`${BACKEND_BASE}/knowledge?client_id=${clientId}`, {
-      cache: "no-store",
-    });
+    const response = await fetch(`/api/knowledge?clientSlug=${clientSlug}`, { cache: "no-store" });
     if (!response.ok) {
       throw new Error(await response.text());
     }
@@ -38,15 +35,15 @@ export default function KnowledgePage() {
       return;
     }
     console.log("[knowledge] upload payload", {
-      client_id: clientId,
+      clientSlug,
       file_name: file.name,
       file_type: file.type,
       file_size: file.size,
     });
     setBusy(true);
     try {
-      formData.set("client_id", String(clientId));
-      const response = await fetch(`${BACKEND_BASE}/knowledge/upload-file`, {
+      formData.set("clientSlug", clientSlug);
+      const response = await fetch(`/api/knowledge/upload`, {
         method: "POST",
         body: formData,
       });

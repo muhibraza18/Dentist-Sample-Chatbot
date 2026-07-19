@@ -1,7 +1,7 @@
 import { api } from "@/lib/api";
-import type { Appointment } from "@/lib/types";
+import type { Appointment } from "@/types";
 
-const clientId = 1;
+const clientSlug = "default";
 
 export default async function AppointmentsPage({
   searchParams,
@@ -11,7 +11,7 @@ export default async function AppointmentsPage({
   const params = await searchParams;
   const q = params.q ?? "";
   const appointments = await api.get<Appointment[]>(
-    `/appointments?client_id=${clientId}&q=${encodeURIComponent(q)}`
+    `/api/appointments?clientSlug=${clientSlug}&q=${encodeURIComponent(q)}`
   );
 
   return (
@@ -47,10 +47,10 @@ export default async function AppointmentsPage({
                 <td className="px-4 py-3">{item.phone}</td>
                 <td className="px-4 py-3">{item.email}</td>
                 <td className="px-4 py-3">{item.service}</td>
-                <td className="px-4 py-3">{item.appointment_date}</td>
-                <td className="px-4 py-3">{item.appointment_time}</td>
+                <td className="px-4 py-3">{item.appointmentDate}</td>
+                <td className="px-4 py-3">{item.appointmentTime}</td>
                 <td className="px-4 py-3">{item.status}</td>
-                <td className="px-4 py-3">{item.created_at ?? "-"}</td>
+                <td className="px-4 py-3">{item.createdAt ?? "-"}</td>
               </tr>
             ))}
           </tbody>

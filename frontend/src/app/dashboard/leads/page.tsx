@@ -1,7 +1,7 @@
 import { api } from "@/lib/api";
-import type { Lead } from "@/lib/types";
+import type { Lead } from "@/types";
 
-const clientId = 1;
+const clientSlug = "default";
 
 export default async function LeadsPage({
   searchParams,
@@ -10,7 +10,7 @@ export default async function LeadsPage({
 }) {
   const params = await searchParams;
   const q = params.q ?? "";
-  const leads = await api.get<Lead[]>(`/leads?client_id=${clientId}&q=${encodeURIComponent(q)}`);
+  const leads = await api.get<Lead[]>(`/api/leads?clientSlug=${clientSlug}&q=${encodeURIComponent(q)}`);
 
   return (
     <div className="space-y-6">
@@ -40,7 +40,7 @@ export default async function LeadsPage({
                 <td className="px-4 py-3">{lead.name}</td>
                 <td className="px-4 py-3">{lead.email}</td>
                 <td className="px-4 py-3">{lead.phone}</td>
-                <td className="px-4 py-3">{lead.service_requested}</td>
+                <td className="px-4 py-3">{lead.serviceRequested}</td>
               </tr>
             ))}
           </tbody>
@@ -49,4 +49,3 @@ export default async function LeadsPage({
     </div>
   );
 }
-

@@ -1,10 +1,10 @@
 import { api } from "@/lib/api";
-import type { Conversation } from "@/lib/types";
+import type { Conversation } from "@/types";
 
-const clientId = 1;
+const clientSlug = "default";
 
 export default async function ConversationsPage() {
-  const conversations = await api.get<Conversation[]>(`/conversations?client_id=${clientId}`);
+  const conversations = await api.get<Conversation[]>(`/api/conversations?clientSlug=${clientSlug}`);
 
   return (
     <div className="space-y-6">
@@ -14,7 +14,7 @@ export default async function ConversationsPage() {
           <div key={item.id} className="glass rounded-2xl p-5">
             <div className="flex items-center justify-between text-xs uppercase tracking-wide text-slate-400">
               <span>{item.role}</span>
-              <span>{item.session_id}</span>
+              <span>{item.sessionId}</span>
             </div>
             <p className="mt-3 whitespace-pre-wrap text-sm text-slate-200">{item.message}</p>
           </div>
@@ -23,4 +23,3 @@ export default async function ConversationsPage() {
     </div>
   );
 }
-

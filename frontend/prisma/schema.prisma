@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id              Int                 @id @default(autoincrement())
+  clientSlug      String              @unique @map("client_slug")
+  clinicName      String              @map("clinic_name")
+  clinicEmail     String              @map("clinic_email")
+  clinicPhone     String              @map("clinic_phone")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+  leads           Lead[]
+  appointments    Appointment[]
+  conversations   Conversation[]
+  knowledgeDocs   KnowledgeDocument[]
+
+  @@map("clients")
+}
+
+model Lead {
+  id               Int      @id @default(autoincrement())
+  clientId         Int      @map("client_id")
+  name             String
+  email            String
+  phone            String
+  serviceRequested String   @map("service_requested")
+  createdAt        DateTime @default(now()) @map("created_at")
+  client           Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@map("leads")
+}
+
+model Appointment {
+  id              Int      @id @default(autoincrement())
+  clientId        Int      @map("client_id")
+  name            String
+  phone           String
+  email           String
+  service         String
+  appointmentDate DateTime @map("appointment_date")
+  appointmentTime String   @map("appointment_time")
+  status          String   @default("pending")
+  createdAt       DateTime @default(now()) @map("created_at")
+  client          Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@map("appointments")
+}
+
+model Conversation {
+  id         Int      @id @default(autoincrement())
+  clientId   Int      @map("client_id")
+  sessionId  String   @map("session_id")
+  message    String
+  role       String
+  metadata   Json?    @default("{}")
+  createdAt  DateTime @default(now()) @map("created_at")
+  client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, sessionId])
+  @@map("conversations")
+}
+
+model KnowledgeDocument {
+  id         Int      @id @default(autoincrement())
+  clientId   Int      @map("client_id")
+  fileName   String?  @map("file_name")
+  content    String
+  embedding  Json
+  sourceType String   @default("text") @map("source_type")
+  createdAt  DateTime @default(now()) @map("created_at")
+  client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@map("knowledge_documents")
+}

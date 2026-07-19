@@ -44,17 +44,17 @@ export default function WidgetPage() {
     const cleaned = text.trim();
     if (!cleaned) return;
     console.log("[widget] sendMessage", {
-      client_slug: clientSlug,
-      session_id: sessionId,
+      clientSlug,
+      sessionId,
       message: cleaned,
     });
     setMessages((prev) => [...prev, { role: "user", content: cleaned }]);
     setInput("");
     setTyping(true);
     try {
-      const response = await api.post<{ reply: string }>("/chat", {
-        client_slug: clientSlug,
-        session_id: sessionId,
+      const response = await api.post<{ reply: string }>("/api/chat", {
+        clientSlug,
+        sessionId,
         message: cleaned,
       });
       console.log("[widget] chat response", response);

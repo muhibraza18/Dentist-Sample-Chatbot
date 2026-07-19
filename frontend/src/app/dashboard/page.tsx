@@ -1,14 +1,14 @@
 import { api } from "@/lib/api";
-import type { Appointment, Conversation, KnowledgeDocument, Lead } from "@/lib/types";
+import type { Appointment, Conversation, KnowledgeDocument, Lead } from "@/types";
 
-const clientId = 1;
+const clientSlug = "default";
 
 export default async function DashboardPage() {
   const [appointments, leads, conversations, knowledge] = await Promise.all([
-    api.get<Appointment[]>(`/appointments?client_id=${clientId}`),
-    api.get<Lead[]>(`/leads?client_id=${clientId}`),
-    api.get<Conversation[]>(`/conversations?client_id=${clientId}`),
-    api.get<KnowledgeDocument[]>(`/knowledge?client_id=${clientId}`),
+    api.get<Appointment[]>(`/api/appointments?clientSlug=${clientSlug}`),
+    api.get<Lead[]>(`/api/leads?clientSlug=${clientSlug}`),
+    api.get<Conversation[]>(`/api/conversations?clientSlug=${clientSlug}`),
+    api.get<KnowledgeDocument[]>(`/api/knowledge?clientSlug=${clientSlug}`),
   ]);
 
   const cards = [
@@ -22,7 +22,7 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-semibold">Overview</h1>
-        <p className="mt-1 text-slate-400">Tenant-scoped activity for clinic ID {clientId}.</p>
+        <p className="mt-1 text-slate-400">Tenant-scoped activity for clinic slug {clientSlug}.</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => (
@@ -38,7 +38,7 @@ export default async function DashboardPage() {
           <div className="mt-4 space-y-3 text-sm text-slate-300">
             {appointments.slice(0, 5).map((item) => (
               <div key={item.id} className="rounded-xl border border-white/10 p-3">
-                {item.name} - {item.service} - {item.appointment_date} {item.appointment_time}
+                {item.name} - {item.service} - {item.appointmentDate} {item.appointmentTime}
               </div>
             ))}
           </div>
@@ -48,7 +48,7 @@ export default async function DashboardPage() {
           <div className="mt-4 space-y-3 text-sm text-slate-300">
             {leads.slice(0, 5).map((item) => (
               <div key={item.id} className="rounded-xl border border-white/10 p-3">
-                {item.name} - {item.service_requested}
+                {item.name} - {item.serviceRequested}
               </div>
             ))}
           </div>
