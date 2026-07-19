@@ -7,6 +7,9 @@ import { createAppointmentAndNotify, getBookingState, resetBookingState, saveBoo
 import { prisma } from "@/lib/prisma";
 import { searchKnowledge } from "@/lib/rag";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 
 const schema = z.object({
