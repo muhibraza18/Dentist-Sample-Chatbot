@@ -4,6 +4,9 @@ import { extractTextFromFile } from "@/lib/document";
 import { embedText } from "@/lib/embedding";
 import { prisma } from "@/lib/prisma";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
   const formData = await request.formData();
   const clientSlug = String(formData.get("clientSlug") ?? "default");
@@ -31,4 +34,3 @@ export async function POST(request: Request) {
     fileName: doc.fileName,
   });
 }
-

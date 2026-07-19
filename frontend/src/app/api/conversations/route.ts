@@ -4,6 +4,9 @@ import { prisma } from "@/lib/prisma";
 
 type ConversationRow = Awaited<ReturnType<typeof prisma.conversation.findMany>>[number];
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const clientSlug = url.searchParams.get("clientSlug") ?? "default";

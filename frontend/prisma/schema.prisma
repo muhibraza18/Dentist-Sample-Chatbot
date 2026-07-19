@@ -9,10 +9,10 @@ datasource db {
 
 model Client {
   id              Int                 @id @default(autoincrement())
-  clientSlug      String              @unique @map("client_slug")
+  clientSlug      String              @unique @map("slug")
   clinicName      String              @map("clinic_name")
-  clinicEmail     String              @map("clinic_email")
-  clinicPhone     String              @map("clinic_phone")
+  clinicEmail     String              @map("email")
+  clinicPhone     String              @map("phone")
   createdAt       DateTime            @default(now()) @map("created_at")
   updatedAt       DateTime            @updatedAt @map("updated_at")
   leads           Lead[]

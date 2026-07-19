@@ -6,6 +6,9 @@ import { sendLeadNotification } from "@/lib/email";
 
 type LeadRow = Awaited<ReturnType<typeof prisma.lead.findMany>>[number];
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 const schema = z.object({
   clientSlug: z.string().min(1),
   name: z.string().min(1),
