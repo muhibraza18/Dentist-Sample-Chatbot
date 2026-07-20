@@ -1,4 +1,3 @@
-import { prisma } from "@/lib/prisma";
 import { sendAppointmentNotification } from "@/lib/email";
 
 export type BookingStep = "idle" | "collect_contact" | "collect_service_datetime" | "awaiting_confirmation";
@@ -108,6 +107,7 @@ export function resetBookingState(clientId: number, sessionId: string) {
 }
 
 export async function createAppointmentAndNotify(clientId: number, clinicName: string, state: BookingState) {
+  const { prisma } = await import("@/lib/prisma");
   const appointment = await prisma.appointment.create({
     data: {
       clientId,
