@@ -7,6 +7,15 @@ import { parseAppointmentDate, parseAppointmentTime } from "@/lib/booking";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+type AppointmentRow = {
+  name: string;
+  email: string;
+  phone: string;
+  service: string;
+  appointmentDate: Date;
+  createdAt: Date;
+};
+
 const schema = z.object({
   clientSlug: z.string().min(1),
   name: z.string().min(1),
@@ -52,10 +61,13 @@ export async function GET(request: Request) {
   const clientSlug = url.searchParams.get("clientSlug") ?? "default";
   const q = (url.searchParams.get("q") ?? "").toLowerCase();
   const clinic = (await getClinicBySlug(clientSlug)) ?? (await ensureDefaultClinic());
-  let appointments = await prisma.appointment.findMany({ where: { clientId: clinic.id }, orderBy: { createdAt: "desc" } });
+  let appointments = (await prisma.appointment.findMany({
+    where: { clientId: clinic.id },
+    orderBy: { createdAt: "desc" },
+  })) as AppointmentRow[];
   if (q) {
     appointments = appointments.filter(
-      (item) =>
+      (item: AppointmentRow) =>
         item.name.toLowerCase().includes(q) ||
         item.email.toLowerCase().includes(q) ||
         item.phone.toLowerCase().includes(q) ||
@@ -63,7 +75,7 @@ export async function GET(request: Request) {
     );
   }
   return NextResponse.json(
-    appointments.map((item) => ({
+    appointments.map((item: AppointmentRow) => ({
       ...item,
       appointmentDate: item.appointmentDate.toISOString(),
       createdAt: item.createdAt.toISOString(),
