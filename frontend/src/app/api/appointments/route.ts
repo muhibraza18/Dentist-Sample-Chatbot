@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { ensureDefaultClinic, getClinicBySlug } from "@/lib/clinic";
-import { prisma } from "@/lib/prisma";
 import { sendAppointmentNotification } from "@/lib/email";
 import { parseAppointmentDate, parseAppointmentTime } from "@/lib/booking";
-
-type AppointmentRow = Awaited<ReturnType<typeof prisma.appointment.findMany>>[number];
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,6 +19,7 @@ const schema = z.object({
 });
 
 export async function POST(request: Request) {
+  const { prisma } = await import("@/lib/prisma");
   const payload = schema.parse(await request.json());
   const clinic = (await getClinicBySlug(payload.clientSlug)) ?? (await ensureDefaultClinic());
   const appointment = await prisma.appointment.create({
@@ -49,6 +47,7 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
+  const { prisma } = await import("@/lib/prisma");
   const url = new URL(request.url);
   const clientSlug = url.searchParams.get("clientSlug") ?? "default";
   const q = (url.searchParams.get("q") ?? "").toLowerCase();
@@ -56,7 +55,7 @@ export async function GET(request: Request) {
   let appointments = await prisma.appointment.findMany({ where: { clientId: clinic.id }, orderBy: { createdAt: "desc" } });
   if (q) {
     appointments = appointments.filter(
-      (item: AppointmentRow) =>
+      (item) =>
         item.name.toLowerCase().includes(q) ||
         item.email.toLowerCase().includes(q) ||
         item.phone.toLowerCase().includes(q) ||
@@ -64,7 +63,7 @@ export async function GET(request: Request) {
     );
   }
   return NextResponse.json(
-    appointments.map((item: AppointmentRow) => ({
+    appointments.map((item) => ({
       ...item,
       appointmentDate: item.appointmentDate.toISOString(),
       createdAt: item.createdAt.toISOString(),
