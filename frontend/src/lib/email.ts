@@ -1,13 +1,16 @@
 import { Resend } from "resend";
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-
 function clinicOwnerEmail() {
   return process.env.CLINIC_OWNER_EMAIL ?? "owner@example.com";
 }
 
 function fromEmail() {
   return process.env.EMAIL_FROM ?? "Dental Receptionist <onboarding@resend.dev>";
+}
+
+function getResendClient() {
+  const apiKey = process.env.RESEND_API_KEY;
+  return apiKey ? new Resend(apiKey) : null;
 }
 
 export async function sendLeadNotification(payload: {
@@ -17,6 +20,7 @@ export async function sendLeadNotification(payload: {
   phone: string;
   serviceRequested: string;
 }) {
+  const resend = getResendClient();
   if (!resend) return { skipped: true };
   return resend.emails.send({
     from: fromEmail(),
@@ -41,6 +45,7 @@ export async function sendAppointmentNotification(payload: {
   appointmentDate: string;
   appointmentTime: string;
 }) {
+  const resend = getResendClient();
   if (!resend) return { skipped: true };
   return resend.emails.send({
     from: fromEmail(),

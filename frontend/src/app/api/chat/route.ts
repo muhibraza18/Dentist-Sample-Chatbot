@@ -1,16 +1,12 @@
-import OpenAI from "openai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getClinicBySlug, ensureDefaultClinic } from "@/lib/clinic";
 import { createAppointmentAndNotify, getBookingState, resetBookingState, saveBookingState } from "@/lib/booking";
-import { prisma } from "@/lib/prisma";
 import { searchKnowledge } from "@/lib/rag";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 
 const schema = z.object({
   clientSlug: z.string().min(1),
@@ -126,7 +122,10 @@ function missingFieldMessage(fields: string[]) {
 }
 
 export async function POST(request: Request) {
+  const { prisma } = await import("@/lib/prisma");
+  const { default: OpenAI } = await import("openai");
   const payload = schema.parse(await request.json());
+  const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
   const clinic = (await getClinicBySlug(payload.clientSlug)) ?? (await ensureDefaultClinic());
   const bookingState = getBookingState(clinic.id, payload.sessionId);
 
