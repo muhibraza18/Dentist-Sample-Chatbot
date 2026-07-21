@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { ensureDefaultClinic, getClinicBySlug } from "@/lib/clinic";
-import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  const { prisma } = await import("@/lib/prisma");
   const url = new URL(request.url);
   const clientSlug = url.searchParams.get("clientSlug") ?? "default";
   const clinic = (await getClinicBySlug(clientSlug)) ?? (await ensureDefaultClinic());
