@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { ensureDefaultClinic, getClinicBySlug } from "@/lib/clinic";
-import { prisma } from "@/lib/prisma";
-
-type KnowledgeRow = Awaited<ReturnType<typeof prisma.knowledgeDocument.findMany>>[number];
+import type { KnowledgeDocument } from "@prisma/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  const { prisma } = await import("@/lib/prisma");
   const url = new URL(request.url);
   const clientSlug = url.searchParams.get("clientSlug") ?? "default";
   const clinic = (await getClinicBySlug(clientSlug)) ?? (await ensureDefaultClinic());
@@ -16,7 +15,7 @@ export async function GET(request: Request) {
     orderBy: { createdAt: "desc" },
   });
   return NextResponse.json(
-    docs.map((doc: KnowledgeRow) => ({
+    docs.map((doc: KnowledgeDocument) => ({
       ...doc,
       embedding: Array.isArray(doc.embedding) ? doc.embedding : [],
       createdAt: doc.createdAt.toISOString(),

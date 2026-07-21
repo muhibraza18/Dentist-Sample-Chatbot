@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { ensureDefaultClinic, getClinicBySlug } from "@/lib/clinic";
-import { prisma } from "@/lib/prisma";
 import { sendLeadNotification } from "@/lib/email";
-
-type LeadRow = Awaited<ReturnType<typeof prisma.lead.findMany>>[number];
+import type { Lead } from "@prisma/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,6 +16,7 @@ const schema = z.object({
 });
 
 export async function POST(request: Request) {
+  const { prisma } = await import("@/lib/prisma");
   const payload = schema.parse(await request.json());
   const clinic = (await getClinicBySlug(payload.clientSlug)) ?? (await ensureDefaultClinic());
   const lead = await prisma.lead.create({
@@ -40,6 +39,7 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
+  const { prisma } = await import("@/lib/prisma");
   const url = new URL(request.url);
   const clientSlug = url.searchParams.get("clientSlug") ?? "default";
   const q = (url.searchParams.get("q") ?? "").toLowerCase();
@@ -47,7 +47,7 @@ export async function GET(request: Request) {
   let leads = await prisma.lead.findMany({ where: { clientId: clinic.id }, orderBy: { createdAt: "desc" } });
   if (q) {
     leads = leads.filter(
-      (lead: LeadRow) =>
+      (lead: Lead) =>
         lead.name.toLowerCase().includes(q) ||
         lead.email.toLowerCase().includes(q) ||
         lead.phone.toLowerCase().includes(q) ||
