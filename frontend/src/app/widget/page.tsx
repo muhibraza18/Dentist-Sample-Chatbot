@@ -1,7 +1,9 @@
 "use client";
 
-import { api } from "@/lib/api";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import ChatHeader from "@/components/widget/ChatHeader";
+import ChatMessages from "@/components/widget/ChatMessages";
+import ChatInput from "@/components/widget/ChatInput";
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -15,7 +17,7 @@ export default function WidgetPage() {
   ]);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
-  const scroller = useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
 
   function createSessionId() {
     const value = crypto.randomUUID();
@@ -36,8 +38,18 @@ export default function WidgetPage() {
   }, []);
 
   useEffect(() => {
-    scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" });
-  }, [messages, typing]);
+    setIsOpen(true);
+  }, []);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        window.parent?.postMessage("close-chat-widget", "*");
+      }
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, []);
 
   async function sendMessage(text: string) {
     const cleaned = text.trim();
@@ -115,69 +127,31 @@ export default function WidgetPage() {
     console.log("[widget] new chat session", value);
   }
 
+  const handleClose = () => {
+    setIsOpen(false);
+    setTimeout(() => {
+      window.parent?.postMessage("close-chat-widget", "*");
+    }, 150);
+  };
+
   return (
-    <div className="flex h-screen w-full flex-col bg-slate-950 text-white">
-      <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 shrink-0">
-        <div>
-          <div className="font-semibold">Dental Receptionist</div>
-          <div className="text-xs text-slate-400">Online now</div>
-        </div>
-        <button
-          onClick={() => window.parent?.postMessage("close-chat-widget", "*")}
-          className="rounded-full bg-cyan-500 px-3 py-1 text-xs font-medium hover:bg-cyan-600 transition-colors"
-        >
-          Close
-        </button>
-      </div>
+    <div 
+      className={`flex flex-col bg-[#020617] text-white transition-all duration-250 ${
+        isOpen ? 'animate-slide-up' : 'opacity-0 scale-95'
+      }`}
+      style={{
+        width: '100%',
+        height: '100%',
+        maxWidth: '360px',
+        maxHeight: '600px',
+        borderRadius: '20px',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(31, 41, 55, 0.5)',
+      }}
+    >
+      <ChatHeader onClose={handleClose} />
       <div className="flex flex-1 flex-col overflow-hidden">
-        <div className="flex items-center justify-between border-b border-white/10 px-4 py-2 shrink-0 bg-slate-900/50">
-          <div className="text-xs text-slate-400">Session: {sessionId || "..."}</div>
-          <button
-            type="button"
-            onClick={startNewChat}
-            className="rounded-xl border border-white/10 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-white/5"
-          >
-            New Chat
-          </button>
-        </div>
-        <div ref={scroller} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
-          {messages.map((msg, index) => (
-            <div
-              key={`${msg.role}-${index}`}
-              className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${
-                msg.role === "user"
-                  ? "ml-auto bg-cyan-500 text-white"
-                  : "bg-white/5 border border-white/10 text-slate-100"
-              }`}
-            >
-              {msg.content}
-            </div>
-          ))}
-          {typing ? (
-            <div className="max-w-[85%] rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">
-              Typing...
-            </div>
-          ) : null}
-        </div>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            sendMessage(input);
-          }}
-          className="border-t border-white/10 p-3 shrink-0"
-        >
-          <div className="flex gap-2">
-            <input
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              placeholder="Ask about services, hours, or book a visit..."
-              className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none placeholder:text-slate-500 focus:border-cyan-500/50 transition-colors"
-            />
-            <button className="rounded-2xl bg-cyan-500 px-4 py-3 text-sm font-medium text-white hover:bg-cyan-600 transition-colors">
-              Send
-            </button>
-          </div>
-        </form>
+        <ChatMessages messages={messages} typing={typing} />
+        <ChatInput input={input} setInput={setInput} onSend={sendMessage} disabled={typing} />
       </div>
     </div>
   );

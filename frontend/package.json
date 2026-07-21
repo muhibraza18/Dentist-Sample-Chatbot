@@ -10,6 +10,7 @@
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "better-auth": "^1.1.17",
+    "lucide-react": "^1.25.0",
     "mammoth": "^1.8.0",
     "next": "^16.2.10",
     "openai": "^4.104.0",
