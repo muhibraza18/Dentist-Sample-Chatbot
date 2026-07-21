@@ -25,26 +25,24 @@ export default function ChatInput({ input, setInput, onSend, disabled }: ChatInp
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 border-t border-gray-800 bg-gray-900/50 backdrop-blur-sm">
-      <div className="flex gap-3 items-end">
-        <div className="flex-1 relative">
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask about appointments, pricing or services..."
-            disabled={disabled}
-            className="w-full bg-gray-800/50 border border-gray-700 rounded-2xl px-4 py-3 pr-12 text-sm text-white placeholder-gray-500 outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Type your message"
-          />
-        </div>
+    <form onSubmit={handleSubmit} className="p-3 border-t border-gray-700 bg-gray-800">
+      <div className="flex gap-2 items-center">
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Ask about appointments..."
+          disabled={disabled}
+          className="flex-1 bg-gray-700 border border-gray-600 rounded-full px-4 py-2.5 text-sm text-white placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label="Type your message"
+        />
         <button
           type="submit"
           disabled={disabled || !input.trim()}
-          className="w-12 h-12 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 flex items-center justify-center text-white hover:shadow-lg hover:shadow-cyan-500/30 transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+          className="w-9 h-9 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500/50"
           aria-label="Send message"
         >
-          <Send className="w-5 h-5" />
+          <Send className="w-4 h-4" />
         </button>
       </div>
     </form>

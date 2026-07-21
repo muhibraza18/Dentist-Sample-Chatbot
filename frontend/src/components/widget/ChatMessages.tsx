@@ -1,63 +1,45 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import MessageBubble from "./MessageBubble";
 import TypingIndicator from "./TypingIndicator";
+import Suggestions from "./Suggestions";
 
 type Message = { role: "user" | "assistant"; content: string };
 
 interface ChatMessagesProps {
   messages: Message[];
   typing: boolean;
+  onSuggestionSelect: (suggestion: string) => void;
 }
 
-export default function ChatMessages({ messages, typing }: ChatMessagesProps) {
+export default function ChatMessages({ messages, typing, onSuggestionSelect }: ChatMessagesProps) {
   const scroller = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" });
   }, [messages, typing]);
 
+  const isEmpty = messages.length === 1 && messages[0].role === "assistant";
+
   return (
     <div 
       ref={scroller}
-      className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent"
+      className="flex-1 overflow-y-auto px-4 py-4 space-y-3 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent"
     >
-      {messages.map((msg, index) => (
-        <div
-          key={`${msg.role}-${index}`}
-          className={`flex gap-3 animate-fade-in ${
-            msg.role === "user" ? "flex-row-reverse" : "flex-row"
-          }`}
-          style={{ animationDelay: `${index * 50}ms` }}
-        >
-          {msg.role === "assistant" && (
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shrink-0">
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-              </svg>
-            </div>
-          )}
-          <div
-            className={`max-w-[80%] px-4 py-3 text-sm leading-relaxed ${
-              msg.role === "user"
-                ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-2xl rounded-tr-none shadow-lg shadow-cyan-500/20"
-                : "bg-gray-800 text-gray-100 rounded-2xl rounded-tl-none border border-gray-700/50"
-            }`}
-          >
-            {msg.content}
-          </div>
-        </div>
-      ))}
-      {typing && (
-        <div className="flex gap-3 animate-fade-in">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shrink-0">
-            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-            </svg>
-          </div>
-          <TypingIndicator />
+      {isEmpty && (
+        <div className="flex flex-col items-center justify-center h-full text-center py-8">
+          <div className="text-4xl mb-4">👋</div>
+          <h3 className="text-lg font-semibold text-white mb-2">Welcome!</h3>
+          <p className="text-sm text-gray-400 mb-4">I'm your Dental AI Receptionist.</p>
+          <p className="text-sm text-gray-400">How can I help today?</p>
+          <Suggestions onSelect={onSuggestionSelect} />
         </div>
       )}
+      {!isEmpty && messages.map((msg, index) => (
+        <MessageBubble key={`${msg.role}-${index}`} role={msg.role} content={msg.content} />
+      ))}
+      {typing && <TypingIndicator />}
     </div>
   );
 }

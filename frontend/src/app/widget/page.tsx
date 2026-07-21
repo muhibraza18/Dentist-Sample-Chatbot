@@ -119,12 +119,8 @@ export default function WidgetPage() {
     }
   }
 
-  function startNewChat() {
-    const value = createSessionId();
-    setMessages([{ role: "assistant", content: "Hi, I'm the dental receptionist. How can I help today?" }]);
-    setInput("");
-    setTyping(false);
-    console.log("[widget] new chat session", value);
+  function handleSuggestionSelect(suggestion: string) {
+    sendMessage(suggestion);
   }
 
   const handleClose = () => {
@@ -136,21 +132,19 @@ export default function WidgetPage() {
 
   return (
     <div 
-      className={`flex flex-col bg-[#020617] text-white transition-all duration-250 ${
-        isOpen ? 'animate-slide-up' : 'opacity-0 scale-95'
+      className={`flex flex-col bg-gray-900 text-white transition-all duration-250 ${
+        isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
       }`}
       style={{
-        width: '100%',
-        height: '100%',
-        maxWidth: '360px',
-        maxHeight: '600px',
+        width: '360px',
+        height: '560px',
         borderRadius: '20px',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(31, 41, 55, 0.5)',
+        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.4)',
       }}
     >
       <ChatHeader onClose={handleClose} />
       <div className="flex flex-1 flex-col overflow-hidden">
-        <ChatMessages messages={messages} typing={typing} />
+        <ChatMessages messages={messages} typing={typing} onSuggestionSelect={handleSuggestionSelect} />
         <ChatInput input={input} setInput={setInput} onSend={sendMessage} disabled={typing} />
       </div>
     </div>
