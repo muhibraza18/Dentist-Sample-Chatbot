@@ -48,12 +48,13 @@ function extractPhone(text: string) {
 
 function extractDate(text: string) {
   const patterns = [
-    /\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2}(?:,\s*\d{4})?\b/i,
-    /\b\d{1,2}\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*(?:,\s*\d{4})?\b/i,
+    /\b(?:(?:mon|tues|wednes|thurs|fri|satur|sun)day,?\s+)?(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s*\d{4})?\b/i,
+    /\b\d{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*(?:,?\s*\d{4})?\b/i,
     /\b\d{4}-\d{2}-\d{2}\b/,
     /\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/,
     /\btomorrow\b/i,
     /\bnext\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i,
+    /\b(?:on\s+)?(?:\d{1,2}(?:st|nd|rd|th)?)\b/i, // fallback for "22" or "24th"
   ];
   for (const pattern of patterns) {
     const match = text.match(pattern);
@@ -125,7 +126,14 @@ export async function POST(request: Request) {
   const { prisma } = await import("@/lib/prisma");
   const { default: OpenAI } = await import("openai");
   const payload = schema.parse(await request.json());
-  const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+  const client = process.env.OPENAI_API_KEY
+    ? new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+        baseURL: process.env.OPENAI_API_KEY.startsWith("gsk_")
+          ? "https://api.groq.com/openai/v1"
+          : undefined,
+      })
+    : null;
   const clinic = (await getClinicBySlug(payload.clientSlug)) ?? (await ensureDefaultClinic());
   const bookingState = getBookingState(clinic.id, payload.sessionId);
 
@@ -254,29 +262,56 @@ export async function POST(request: Request) {
   const context = await searchKnowledge(clinic.id, payload.message, 5);
   const retrievedContext = context.map((row: { content: string }) => row.content).join("\n\n");
 
-  const reply =
-    context.length === 0
+  if (context.length === 0 || !client) {
+    const reply = context.length === 0
       ? "I don't have that information in my knowledge base."
-      : client
-        ? (
-            await client.chat.completions.create({
-              model: process.env.OPENAI_CHAT_MODEL ?? "gpt-4o-mini",
-              messages: [
-                { role: "system", content: "You are a friendly dental receptionist. Use only the clinic knowledge provided. Be concise and helpful." },
-                ...history.slice(-8).map((item: { role: string; message: string }) => ({
-                  role: item.role as "user" | "assistant",
-                  content: item.message,
-                })),
-                { role: "system", content: `Clinic knowledge:\n${retrievedContext}` },
-                { role: "user", content: payload.message },
-              ],
-            })
-          ).choices[0]?.message?.content?.trim() ?? "I'm here to help with clinic questions."
-        : "I'm here to help with clinic questions.";
+      : "I'm here to help with clinic questions.";
+    await prisma.conversation.create({
+      data: { clientId: clinic.id, sessionId: payload.sessionId, message: reply, role: "assistant" },
+    });
+    return NextResponse.json({ reply, sessionId: payload.sessionId, bookingState });
+  }
 
-  await prisma.conversation.create({
-    data: { clientId: clinic.id, sessionId: payload.sessionId, message: reply, role: "assistant" },
+  const response = await client.chat.completions.create({
+    model: process.env.OPENAI_CHAT_MODEL ?? "gpt-4o-mini",
+    messages: [
+      { role: "system", content: "You are a friendly dental receptionist. Use only the clinic knowledge provided. Be concise and helpful." },
+      ...history.slice(-8).map((item: { role: string; message: string }) => ({
+        role: item.role as "user" | "assistant",
+        content: item.message,
+      })),
+      { role: "system", content: `Clinic knowledge:\n${retrievedContext}` },
+      { role: "user", content: payload.message },
+    ],
+    stream: true,
   });
 
-  return NextResponse.json({ reply, sessionId: payload.sessionId, bookingState });
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      let fullReply = "";
+      controller.enqueue(encoder.encode(JSON.stringify({ type: 'metadata', bookingState, sessionId: payload.sessionId }) + '\n'));
+      
+      try {
+        for await (const chunk of response) {
+          const text = chunk.choices[0]?.delta?.content || "";
+          if (text) {
+            fullReply += text;
+            controller.enqueue(encoder.encode(JSON.stringify({ type: 'chunk', text }) + '\n'));
+          }
+        }
+      } catch (err) {
+        console.error("Streaming error:", err);
+      } finally {
+        await prisma.conversation.create({
+          data: { clientId: clinic.id, sessionId: payload.sessionId, message: fullReply.trim() || "I'm here to help with clinic questions.", role: "assistant" },
+        });
+        controller.close();
+      }
+    }
+  });
+
+  return new Response(stream, {
+    headers: { "Content-Type": "application/x-ndjson" }
+  });
 }

@@ -52,21 +52,58 @@ export default function WidgetPage() {
     setInput("");
     setTyping(true);
     try {
-      const response = await api.post<{ reply: string }>("/api/chat", {
-        clientSlug,
-        sessionId,
-        message: cleaned,
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientSlug, sessionId, message: cleaned }),
       });
-      console.log("[widget] chat response", response);
-      setMessages((prev) => [...prev, { role: "assistant", content: response.reply }]);
+      if (!response.ok) throw new Error("Network error");
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        const data = await response.json();
+        console.log("[widget] chat response JSON", data);
+        setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+        setTyping(false);
+      } else {
+        const reader = response.body?.getReader();
+        if (!reader) throw new Error("No reader");
+        setTyping(false);
+        setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+        const decoder = new TextDecoder();
+        let assistantMessage = "";
+        let buffer = "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || "";
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              const data = JSON.parse(line);
+              if (data.type === 'metadata') {
+                console.log("[widget] stream metadata", data);
+              } else if (data.type === 'chunk') {
+                assistantMessage += data.text;
+                setMessages((prev) => {
+                  const next = [...prev];
+                  next[next.length - 1].content = assistantMessage;
+                  return next;
+                });
+              }
+            } catch (e) {
+              console.error("Parse error", e);
+            }
+          }
+        }
+      }
     } catch (error) {
       console.error("[widget] chat error", error);
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: "Sorry, I couldn't reach the clinic right now." },
       ]);
-    } finally {
-      console.log("[widget] clearing typing state");
       setTyping(false);
     }
   }

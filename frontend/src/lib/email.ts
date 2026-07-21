@@ -47,19 +47,25 @@ export async function sendAppointmentNotification(payload: {
 }) {
   const resend = getResendClient();
   if (!resend) return { skipped: true };
-  return resend.emails.send({
-    from: fromEmail(),
-    to: [clinicOwnerEmail()],
-    subject: `New appointment request for ${payload.clinicName}`,
-    html: `
-      <h2>New Appointment Request</h2>
-      <p><strong>Patient:</strong> ${payload.patientName}</p>
-      <p><strong>Email:</strong> ${payload.patientEmail}</p>
-      <p><strong>Phone:</strong> ${payload.patientPhone}</p>
-      <p><strong>Service:</strong> ${payload.service}</p>
-      <p><strong>Date:</strong> ${payload.appointmentDate}</p>
-      <p><strong>Time:</strong> ${payload.appointmentTime}</p>
-    `,
-  });
+  try {
+    const result = await resend.emails.send({
+      from: fromEmail(),
+      to: [clinicOwnerEmail()],
+      subject: `New appointment request for ${payload.clinicName}`,
+      html: `
+        <h2>New Appointment Request</h2>
+        <p><strong>Patient:</strong> ${payload.patientName}</p>
+        <p><strong>Email:</strong> ${payload.patientEmail}</p>
+        <p><strong>Phone:</strong> ${payload.patientPhone}</p>
+        <p><strong>Service:</strong> ${payload.service}</p>
+        <p><strong>Date:</strong> ${payload.appointmentDate}</p>
+        <p><strong>Time:</strong> ${payload.appointmentTime}</p>
+      `,
+    });
+    console.log("Resend Appointment Notification Result:", result);
+    return result;
+  } catch (error) {
+    console.error("Error sending appointment notification:", error);
+    throw error;
+  }
 }
-

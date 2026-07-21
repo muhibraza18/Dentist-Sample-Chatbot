@@ -39,7 +39,7 @@ export function parseAppointmentDate(input: string) {
   const parsed = new Date(value);
   if (!Number.isNaN(parsed.getTime())) return parsed;
   const monthMatch = value.match(
-    /^(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(\d{1,2})(?:,\s*(\d{4}))?$/i
+    /^(?:(?:mon|tues|wednes|thurs|fri|satur|sun)day,?\s+)?(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s*(\d{4}))?$/i
   );
   if (monthMatch) {
     const monthIndex = [
@@ -58,6 +58,16 @@ export function parseAppointmentDate(input: string) {
     ].findIndex((month) => month.startsWith(monthMatch[1].slice(0, 3).toLowerCase()));
     const year = monthMatch[3] ? Number(monthMatch[3]) : now.getFullYear();
     return new Date(year, monthIndex, Number(monthMatch[2]));
+  }
+  
+  const standaloneDayMatch = value.match(/^(?:on\s+)?(\d{1,2})(?:st|nd|rd|th)?$/i);
+  if (standaloneDayMatch) {
+    const day = Number(standaloneDayMatch[1]);
+    const next = new Date(now.getFullYear(), now.getMonth(), day);
+    if (next < now && next.getDate() !== now.getDate()) {
+        next.setMonth(next.getMonth() + 1);
+    }
+    return next;
   }
   const slashMatch = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
   if (slashMatch) {
